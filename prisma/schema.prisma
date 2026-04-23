@@ -1,0 +1,40 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Tenant {
+  id           String   @id @default(cuid())
+  subdomain    String   @unique           // abc.yourplatform.com
+  customDomain String?  @unique           // www.abc.com
+  mallId       String                     // ShopBy mallId
+  apiKey       String                     // ShopBy API Key
+  theme        String   @default("{}")    // 색상, 폰트 등 테마 설정 (JSON String)
+  createdAt    DateTime @default(now())
+
+  pages        Page[]
+}
+
+model Page {
+  id              String    @id @default(cuid())
+  tenantId        String
+  slug            String                  // "/", "/products" 등
+  pageType        String                  // home | category | product | cart | mypage
+  title           String
+  draftSchema     String    @default("{\"blocks\":[]}") // 편집 중인 버전 (JSON String)
+  publishedSchema String?                   // 라이브 반영된 버전 (JSON String)
+  publishedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, slug])
+}

@@ -25,65 +25,37 @@ ShopBy 솔루션을 이용한 헤드리스 쇼핑몰 개발은 API 연동 과정
 
 ## 2. 핵심 아키텍처 결정
 
-### 선택한 방식: 멀티테넌트 런타임 SaaS (방법 3)
+### 선택한 방식: 모노레포 기반 멀티테넌트 SaaS
 
-플랫폼 서버 하나가 모든 고객의 쇼핑몰을 렌더링하는 구조.
+플랫폼 서버 하나가 모든 고객의 쇼핑몰을 렌더링하되, 관리자 경험 고도화를 위해 에디터와 스토어프론트를 분리한 구조.
 
 ```
-사용자 요청 (shop.고객A.com)
-    ↓
-도메인으로 테넌트 식별
-    ↓
-해당 테넌트의 publishedSchema 조회
-    ↓
-블록 렌더링 + ShopBy API 호출
-    ↓
-페이지 응답
+[apps/admin (Vite SPA)]  ───>  [apps/web (Next.js API)]  ───>  [Supabase (PostgreSQL)]
+      (빌더 에디터)                   (API 서버 & 스토어)
 ```
 
-### 다른 방식과 비교
+### 아키텍처 구성
 
-| 방식 | 설명 | 왜 선택하지 않았나 |
+| 항목 | 구성 | 이유 |
 |------|------|-----------------|
-| 방법 1 (SaaS 완전 호스팅) | Webflow, Imweb처럼 플랫폼이 모든 것 책임 | 방법 3과 유사하나 구분 불명확 |
-| 방법 2 (정적 사이트 SSG) | HTML을 빌드해서 CDN에 업로드 | 상품 10만 개면 빌드 수 시간, 신상품마다 재빌드 필요. SEO 페이지 처리 불가 |
-| **방법 3 (멀티테넌트 런타임)** | **서버 하나에서 스키마 기반 렌더링** | **✅ 선택** |
-
-### 방법 2를 선택하지 않은 이유 (SSG의 한계)
-
-ShopBy에 상품이 10만 개 있을 경우, 빌드 시 10만 개 페이지를 미리 생성해야 하므로 빌드 시간이 수 시간에 달한다. 신상품 추가 시마다 전체 재빌드가 필요하고, 상품 상세 같은 SEO가 중요한 페이지를 실시간으로 렌더링할 서버가 없어 처리가 불가능하다.
+| **구조** | Turborepo 모노레포 | 코드 공유(블록, 타입) 및 독립적 배포/확장성 확보 |
+| **Admin** | Vite + React SPA | 복잡한 에디터 UI의 반응성 최적화 및 가벼운 개발 환경 |
+| **Storefront** | Next.js (App Router) | ShopBy API 실시간 SSR 및 SEO 대응 |
+| **Database** | Supabase (PostgreSQL) | 인프라 관리 부담 제로, JSONB를 통한 유연한 스키마 저장 |
 
 ---
 
 ## 3. 기술 스택
 
-### 프레임워크: Next.js 단일 구조
+### 프레임워크: 모노레포 (Turborepo)
 
-**Next.js를 선택한 핵심 이유**: ShopBy API를 실시간으로 호출해야 하는 storefront SSR과 API Route 통합 때문. (빌더 에디터 자체의 SEO 때문이 아님)
-
-#### 분리 구조 vs Next.js 단일 구조 비교
-
-| 항목 | 분리 구조 (Vite SPA + Next.js) | Next.js 단일 구조 |
-|------|-------------------------------|-----------------|
-| 빌더 에디터 | Vite + React SPA | Next.js |
-| Storefront | 별도 Next.js 서버 | Next.js (같은 서버) |
-| 초기 개발 속도 | 느림 (설정 2배) | 빠름 |
-| 유지보수 | 복잡 (배포 2개) | 단순 |
-| 확장성 | 좋음 (독립 스케일) | 보통 |
-| 에디터 성능 | 좋음 (SPA 최적화) | 보통 |
-| **혼자 개발 적합** | ❌ | ✅ |
-
-> 에디터가 복잡해져서 SPA 최적화가 필요하거나, 팀이 나뉘는 시점에 분리를 고려한다.
-
-### 전체 스택
-
-```
-프론트엔드:  Next.js (App Router) + TypeScript + Tailwind CSS
-에디터 UI:   dnd-kit (드래그앤드롭), Radix UI (컴포넌트)
-DB:          SQLite (로컬) → PostgreSQL (프로덕션)
-ORM:         Prisma
-배포:        Vercel 또는 단일 서버 + 와일드카드 DNS
-```
+| 분류 | 기술 스택 |
+|------|-----------|
+| **Admin (빌더)** | Vite, React, React Router, Tailwind CSS v4, dnd-kit |
+| **Web (스토어)** | Next.js (App Router), Tailwind CSS |
+| **공유 패키지** | Prisma (DB), UI Components, Shared Utils, Global Types |
+| **데이터베이스** | Supabase (PostgreSQL) |
+| **API 연동** | ShopBy Headless API |
 
 ---
 
@@ -312,63 +284,32 @@ export const BLOCK_API_MAP = {
 
 ---
 
-## 9. 프로젝트 디렉토리 구조
+## 9. 프로젝트 디렉토리 구조 (모노레포)
 
 ```
 shopby-builder/
-├── prisma/
-│   ├── schema.prisma
-│   └── seed.ts                        # 로컬 테스트용 더미 데이터
+├── apps/
+│   ├── admin/                 # 빌더 에디터 (Vite SPA)
+│   │   ├── src/
+│   │   │   ├── pages/         # Dashboard, Editor
+│   │   │   └── main.tsx
+│   │   └── vite.config.ts
+│   │
+│   └── web/                   # 스토어프론트 (Next.js)
+│       └── src/app/
+│           ├── [[...slug]]/   # 테넌트 렌더링
+│           └── api/           # ShopBy Proxy & Admin API
 │
-├── src/
-│   ├── app/
-│   │   ├── (builder)/                 # 빌더 에디터 영역
-│   │   │   ├── layout.tsx
-│   │   │   ├── dashboard/
-│   │   │   │   └── page.tsx           # 페이지 목록
-│   │   │   └── editor/
-│   │   │       └── [pageId]/
-│   │   │           └── page.tsx       # 빌더 에디터
-│   │   │
-│   │   ├── (storefront)/              # 실제 쇼핑몰 렌더링
-│   │   │   └── [...slug]/
-│   │   │       └── page.tsx           # 테넌트 페이지 렌더링
-│   │   │
-│   │   └── api/
-│   │       ├── pages/
-│   │       │   ├── route.ts           # GET 목록, POST 생성
-│   │       │   └── [pageId]/
-│   │       │       ├── route.ts       # GET, PUT, DELETE
-│   │       │       └── publish/
-│   │       │           └── route.ts   # POST 퍼블리시
-│   │       │
-│   │       └── shopby/
-│   │           └── [...path]/
-│   │               └── route.ts       # ShopBy API 프록시
-│   │
-│   ├── components/
-│   │   ├── blocks/                    # 렌더링 블록 컴포넌트
-│   │   │   ├── BlockRenderer.tsx      # 블록 타입 → 컴포넌트 매핑
-│   │   │   ├── BannerSlider.tsx
-│   │   │   ├── ProductList.tsx
-│   │   │   ├── CategoryNav.tsx
-│   │   │   └── index.ts
-│   │   │
-│   │   └── editor/                    # 에디터 전용 컴포넌트
-│   │       ├── EditorCanvas.tsx       # 가운데 미리보기
-│   │       ├── BlockPanel.tsx         # 왼쪽 블록 목록
-│   │       └── PropsPanel.tsx         # 오른쪽 속성 편집
-│   │
-│   ├── lib/
-│   │   ├── prisma.ts                  # Prisma 클라이언트 싱글톤
-│   │   ├── tenant.ts                  # 테넌트 식별 유틸
-│   │   └── shopby.ts                  # ShopBy API 호출 함수
-│   │
-│   └── types/
-│       └── schema.ts                  # Block, Page 타입 정의
+├── packages/
+│   ├── database/              # Prisma 스키마 & 클라이언트
+│   ├── blocks/                # 공통 빌더 블록 (Banner, ProductList 등)
+│   ├── ui/                    # 공통 디자인 시스템 컴포넌트
+│   ├── utils/                 # ShopBy API Fetcher & 유틸
+│   └── types/                 # 공통 TS 타입 정의
 │
-├── middleware.ts                       # 테넌트 라우팅
-├── .env.local
+├── turbo.json                 # 빌드 파이프라인
+├── pnpm-workspace.yaml        # 워크스페이스 설정
+├── .env                       # DB 및 API 키 (루트 관리)
 └── package.json
 ```
 

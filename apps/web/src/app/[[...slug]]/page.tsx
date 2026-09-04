@@ -49,7 +49,15 @@ export default async function StorefrontPage({ params }: StorefrontPageProps) {
     )
   }
 
-  const schema = JSON.parse(page.publishedSchema) as PageSchema
+  // publishedSchema is a Json column: existing rows store a JSON-encoded
+  // string (see prisma/seed.ts); normalize until the backfill to native
+  // JSON objects (openspec change align-multitenant-builder-architecture,
+  // task 3.5) lands.
+  const schema = (
+    typeof page.publishedSchema === 'string'
+      ? JSON.parse(page.publishedSchema)
+      : page.publishedSchema
+  ) as PageSchema
 
   return <BlockRenderer blocks={schema.blocks} />
 }

@@ -5,7 +5,9 @@
   "main": "./index.ts",
   "types": "./index.ts",
   "dependencies": {
+    "@repo/database": "workspace:*",
     "clsx": "^2.1.1",
+    "next": "16.2.4",
     "tailwind-merge": "^3.5.0"
   }
 }

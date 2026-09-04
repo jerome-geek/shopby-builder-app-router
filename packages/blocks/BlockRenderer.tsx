@@ -1,15 +1,23 @@
 import type { Block, BlockType } from '@repo/types'
 import dynamic from 'next/dynamic'
 
+// Each block module's default export is typed against its own specific
+// `Block<'X'>`, not the general `Block` union — a `Record<BlockType, ...>`
+// keyed map is necessarily heterogeneous in its value types, which
+// TypeScript can't express without this alias. The cast is safe by
+// construction: each entry below is only ever looked up and invoked
+// through its own matching key (see the `.map` below).
+type AnyBlockComponent = React.ComponentType<{ block: Block }>
+
 // 각 블록을 dynamic import로 코드 스플리팅
 // → 쇼핑몰 방문자는 실제 사용된 블록 JS만 로드
-const BLOCK_MAP: Record<BlockType, React.ComponentType<{ block: Block }>> = {
-  BannerSlider: dynamic(() => import('./BannerSlider')),
-  BannerGrid: dynamic(() => import('./BannerGrid')),
-  ProductList: dynamic(() => import('./ProductList')),
-  CategoryNav: dynamic(() => import('./CategoryNav')),
-  Header: dynamic(() => import('./Header')),
-  Footer: dynamic(() => import('./Footer')),
+const BLOCK_MAP: Record<BlockType, AnyBlockComponent> = {
+  BannerSlider: dynamic(() => import('./BannerSlider')) as AnyBlockComponent,
+  BannerGrid: dynamic(() => import('./BannerGrid')) as AnyBlockComponent,
+  ProductList: dynamic(() => import('./ProductList')) as AnyBlockComponent,
+  CategoryNav: dynamic(() => import('./CategoryNav')) as AnyBlockComponent,
+  Header: dynamic(() => import('./Header')) as AnyBlockComponent,
+  Footer: dynamic(() => import('./Footer')) as AnyBlockComponent,
 }
 
 interface BlockRendererProps {

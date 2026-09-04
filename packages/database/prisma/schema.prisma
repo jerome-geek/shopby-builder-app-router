@@ -15,11 +15,42 @@ model Tenant {
   subdomain    String   @unique           // abc.yourplatform.com
   customDomain String?  @unique           // www.abc.com
   mallId       String                     // ShopBy mallId
-  apiKey       String                     // ShopBy API Key
+  apiKey       String                     // ShopBy API Key (legacy plaintext, retained until encrypted backfill completes)
+
+  // Versioned envelope-encrypted ShopBy credential. Null until the
+  // backfill (tasks 5.1/5.3) runs; apiKey above stays authoritative
+  // for reads until then.
+  apiKeyCiphertext          String?
+  apiKeyNonce               String?
+  apiKeyEncryptionKeyVersion Int?
+
   theme        Json     @default("{}")    // 색상, 폰트 등 테마 설정
   createdAt    DateTime @default(now())
+  archivedAt   DateTime?                  // soft delete; null = active
 
   pages        Page[]
+  memberships  TenantMembership[]
+  domains      TenantDomain[]
+}
+
+model Administrator {
+  id        String   @id // Supabase auth user id
+  email     String   @unique
+  createdAt DateTime @default(now())
+
+  memberships TenantMembership[]
+}
+
+model TenantMembership {
+  id              String   @id @default(cuid())
+  administratorId String
+  tenantId        String
+  createdAt       DateTime @default(now())
+
+  administrator   Administrator @relation(fields: [administratorId], references: [id], onDelete: Cascade)
+  tenant          Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([administratorId, tenantId])
 }
 
 model Page {
@@ -31,10 +62,74 @@ model Page {
   draftSchema     Json     @default("{\"blocks\":[]}") // 편집 중인 버전
   publishedSchema Json?                       // 라이브 반영된 버전
   publishedAt     DateTime?
+
+  // Points at the PageRevision currently live. Kept as a plain scalar
+  // (not a relation) so publish can update it without a circular
+  // required-relation constraint; the revision row is the source of truth.
+  activeRevisionId String?
+
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+  archivedAt      DateTime?                  // soft delete; null = active
 
   tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  revisions       PageRevision[]
+  revalidationOutbox RevalidationOutboxEntry[]
 
   @@unique([tenantId, slug])
+}
+
+// Immutable snapshot created on every successful publish. Enables
+// publish history and rollback-as-a-new-publish (task 8.8).
+model PageRevision {
+  id              String   @id @default(cuid())
+  pageId          String
+  schema          Json                     // frozen { schemaVersion, blocks } at publish time
+  schemaVersion   Int
+  publishedAt     DateTime @default(now())
+  publishedByAdministratorId String?        // Administrator.id, nullable for system/rollback actions
+
+  page            Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@index([pageId, publishedAt])
+}
+
+// Transactional outbox for post-publish cache revalidation. Publish
+// writes commit independently of revalidation; entries here are
+// processed and retried until the tenant/page cache is invalidated.
+model RevalidationOutboxEntry {
+  id          String    @id @default(cuid())
+  tenantId    String
+  pageId      String
+  status      String    @default("pending") // pending | processing | done | failed
+  attempts    Int       @default(0)
+  lastError   String?
+  createdAt   DateTime  @default(now())
+  processedAt DateTime?
+
+  page        Page      @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+}
+
+// Wildcard subdomain and custom domain lifecycle (task 10.x). Separate
+// from Tenant.subdomain/customDomain so verification/SSL state and
+// provider metadata can evolve per-hostname, including during
+// reassignment (old + new hostname coexisting briefly).
+model TenantDomain {
+  id                 String    @id @default(cuid())
+  tenantId           String
+  hostname           String    @unique
+  type               String                        // "platform_subdomain" | "custom"
+  providerId         String?                        // e.g. Vercel domain id
+  verificationStatus String    @default("pending")  // pending | verified | failed
+  sslStatus          String    @default("pending")  // pending | active | failed
+  lastCheckedAt      DateTime?
+  failureReason      String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  tenant             Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
 }

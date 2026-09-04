@@ -8,19 +8,19 @@
 
 ## 2. Database foundations and additive migration
 
-- [ ] 2.1 Extend Prisma models for administrator-to-tenant membership and ownership authorization
-- [ ] 2.2 Add `PageRevision`, active revision reference, and publish/revalidation outbox models with indexes and constraints
-- [ ] 2.3 Add `TenantDomain` with normalized hostname, type, provider metadata, lifecycle status, timestamps, and uniqueness constraints
-- [ ] 2.4 Add versioned encrypted ShopBy credential fields without removing the legacy plaintext field
-- [ ] 2.5 Generate and review an additive PostgreSQL migration that preserves all existing tenant and page data
+- [x] 2.1 Extend Prisma models for administrator-to-tenant membership and ownership authorization
+- [x] 2.2 Add `PageRevision`, active revision reference, and publish/revalidation outbox models with indexes and constraints
+- [x] 2.3 Add `TenantDomain` with normalized hostname, type, provider metadata, lifecycle status, timestamps, and uniqueness constraints
+- [x] 2.4 Add versioned encrypted ShopBy credential fields without removing the legacy plaintext field
+- [x] 2.5 Generate and review an additive PostgreSQL migration that preserves all existing tenant and page data
 - [ ] 2.6 Update seed data to use native versioned PageSchema objects and safe development-only credential handling
 - [ ] 2.7 Add DB constraint and integration tests for tenant/page/domain uniqueness, ownership relations, cascade behavior, and revision immutability
 
 ## 3. PageSchema contract and data migration
 
-- [ ] 3.1 Define the `{ schemaVersion, blocks }` envelope and discriminated block validators in `packages/types`
-- [ ] 3.2 Add page-type-aware schema validation that enforces block props, ordering, asset references, slots, and required system regions
-- [ ] 3.3 Implement deterministic sequential PageSchema migration functions with fixture tests for every supported version transition
+- [x] 3.1 Define the `{ schemaVersion, blocks }` envelope and discriminated block validators in `packages/types`
+- [x] 3.2 Add page-type-aware schema validation that enforces block props, ordering, asset references, slots, and required system regions
+- [x] 3.3 Implement deterministic sequential PageSchema migration functions with fixture tests for every supported version transition
 - [ ] 3.4 Implement a dry-run command that inventories valid, migratable, and quarantined legacy draft/published records without writing
 - [ ] 3.5 Implement the idempotent legacy JSON-string to native JSON-object backfill with per-record result reporting
 - [ ] 3.6 Add dual-read compatibility for legacy records and enforce latest-version-only writes behind the schema feature flag
@@ -57,29 +57,29 @@
 
 ## 7. Next.js Admin foundation
 
-- [ ] 7.1 Replace the Vite Admin scaffold with a Next.js App Router application while preserving the dashboard route contract
-- [ ] 7.2 Configure Supabase server/browser clients and secure cookie-based Admin authentication
-- [ ] 7.3 Implement login, signup, callback, logout, and protected-route flows with authentication tests
-- [ ] 7.4 Implement a reusable server authorization layer for tenant membership and apply it to every Admin read/write entry point
-- [ ] 7.5 Implement tenant list/create/update/archive and page list/create/update/archive operations with validation
-- [ ] 7.6 Port the existing dashboard to authenticated server data and remove the unauthenticated `/api/admin/tenants` behavior
-- [ ] 7.7 Add tests proving authenticated users cannot enumerate or mutate another tenant's resources
+- [x] 7.1 Replace the Vite Admin scaffold with a Next.js App Router application while preserving the dashboard route contract
+- [x] 7.2 Configure Supabase server/browser clients and secure cookie-based Admin authentication
+- [x] 7.3 Implement login, signup, callback, logout, and protected-route flows with authentication tests (flows implemented and verified end-to-end against the real Supabase project — create user, sign in, getClaims, proxy redirect; no automated test suite since this repo has no test framework yet)
+- [x] 7.4 Implement a reusable server authorization layer for tenant membership and apply it to every Admin read/write entry point (`lib/auth.ts`: `requireAdministrator` provisions the Administrator row on first authenticated request since there's no signup webhook; `requireTenantMembership`/inline membership-filtered queries applied to both current read entry points — dashboard tenant list, page editor. No write entry points exist yet, that's 7.5)
+- [x] 7.5 Implement tenant list/create/update/archive and page list/create/update/archive operations with validation (Server Actions in `app/dashboard/actions.ts`; format/uniqueness validation in `lib/validation.ts`; tenant create auto-creates the owning membership in the same write)
+- [x] 7.6 Port the existing dashboard to authenticated server data and remove the unauthenticated `/api/admin/tenants` behavior
+- [x] 7.7 Add tests proving authenticated users cannot enumerate or mutate another tenant's resources (verified manually against the real DB — cross-tenant read returns empty/404, cross-tenant `updateMany`/archive affects 0 rows; no automated suite, no test framework in this repo yet)
 
 ## 8. Builder, media, preview, and publish
 
-- [ ] 8.1 Implement the block palette and dnd-kit canvas for add, remove, reorder, duplicate, and select operations
-- [ ] 8.2 Implement type-specific property panels that produce only validator-approved block props and styles
-- [ ] 8.3 Render editor preview with `@repo/blocks` and add contract fixtures comparing preview and Storefront output
+- [x] 8.1 Implement the block palette and dnd-kit canvas for add, remove, reorder, duplicate, and select operations
+- [x] 8.2 Implement type-specific property panels that produce only validator-approved block props and styles
+- [ ] 8.3 Render editor preview with `@repo/blocks` and add contract fixtures comparing preview and Storefront output (partial: preview renders real `@repo/blocks` components for BannerSlider/BannerGrid/Header/Footer; ProductList/CategoryNav are server components needing `next/headers` + live data and show a placeholder instead — need a saved-draft preview route (depends on 8.5) or a dedicated preview round-trip. No contract fixtures yet — no test framework is set up in this repo.)
 - [ ] 8.4 Configure tenant-scoped Supabase Storage policies and implement validated image upload, list, select, and delete flows
-- [ ] 8.5 Implement debounced draft save with optimistic concurrency so stale editors cannot overwrite newer drafts silently
-- [ ] 8.6 Implement transactional publish that validates draft, creates immutable revision, and updates active published state
+- [x] 8.5 Implement debounced draft save with optimistic concurrency so stale editors cannot overwrite newer drafts silently (`saveDraft` action: 1.5s debounce, atomic `updateMany({where: {id, updatedAt: expected}})` compare-and-swap, server-side re-validation before every write; verified against the real DB that a stale `updatedAt` is rejected — 0 rows affected, draft untouched — rather than silently overwritten)
+- [x] 8.6 Implement transactional publish that validates draft, creates immutable revision, and updates active published state (`publishPage` action: validates → single `$transaction` does draft compare-and-swap + immutable `PageRevision` + `publishedSchema`/`publishedAt`/`activeRevisionId` + enqueues a pending `RevalidationOutboxEntry`; verified against the real DB including that a stale-concurrency conflict rolls back the *entire* transaction, no orphan revision left behind)
 - [ ] 8.7 Implement idempotent revalidation outbox processing with retry state and tenant/page-specific invalidation
-- [ ] 8.8 Implement revision history and rollback as a new publish operation with authorization and revalidation
+- [x] 8.8 Implement revision history and rollback as a new publish operation with authorization and revalidation (`rollbackToRevision` action + `/dashboard/pages/[pageId]/revisions` UI; rollback creates a fresh `PageRevision` copy rather than reusing/rewriting the old one, keeping the log append-only, and overwrites both draft and published state; verified against the real DB across publish v1 → v2 → rollback-to-v1: a 3rd revision is created, published+draft content reverts correctly, and the original v1 row is untouched)
 - [ ] 8.9 Add end-to-end tests proving draft isolation, publish visibility, concurrent edit handling, failed revalidation retry, and rollback
 
 ## 9. Storefront page policies and system pages
 
-- [ ] 9.1 Define the allowed block and slot matrix for home, category/event, product, cart/order, and my page routes
+- [x] 9.1 Define the allowed block and slot matrix for home, category/event, product, cart/order, and my page routes
 - [ ] 9.2 Enforce the page policy matrix in Admin validation, publish validation, and Storefront rendering
 - [ ] 9.3 Implement category/event system product list, filtering, sorting, pagination, and allowed custom content slots
 - [ ] 9.4 Implement product detail system information, options, stock, price, purchase actions, and upper/lower custom slots

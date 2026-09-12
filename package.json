@@ -1,18 +1,26 @@
 {
-  "name": "shopby-builder-monorepo",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "turbo dev",
-    "build": "turbo build",
-    "lint": "turbo lint",
-    "db:push": "pnpm --filter @repo/database db:push",
-    "db:generate": "pnpm --filter @repo/database db:generate",
-    "db:seed": "pnpm --filter @repo/database db:seed"
-  },
-  "devDependencies": {
-    "turbo": "^2",
-    "typescript": "^5"
-  },
-  "packageManager": "pnpm@9.0.0"
+    "name": "shopby-builder-monorepo",
+    "version": "0.1.0",
+    "private": true,
+    "scripts": {
+        "dev": "turbo dev",
+        "dev:admin": "turbo dev --filter=admin",
+        "dev:web": "turbo dev --filter=web",
+        "build": "turbo build",
+        "build:admin": "turbo build --filter=admin",
+        "build:web": "turbo build --filter=web",
+        "start": "turbo start",
+        "start:admin": "turbo start --filter=admin",
+        "start:web": "turbo start --filter=web",
+        "prod": "turbo start",
+        "lint": "turbo lint",
+        "db:push": "pnpm --filter @repo/database db:push",
+        "db:generate": "pnpm --filter @repo/database db:generate",
+        "db:seed": "pnpm --filter @repo/database db:seed"
+    },
+    "devDependencies": {
+        "turbo": "^2",
+        "typescript": "^5"
+    },
+    "packageManager": "pnpm@9.0.0"
 }

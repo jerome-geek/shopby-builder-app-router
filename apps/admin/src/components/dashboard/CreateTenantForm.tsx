@@ -19,14 +19,23 @@ export function CreateTenantForm() {
           pattern="[a-z0-9][a-z0-9-]*[a-z0-9]"
           className="mt-1 w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm text-gray-900 focus:border-indigo-400 focus:outline-none"
         />
+        <span className="mt-1 block text-[11px] font-normal text-gray-400">
+          이 쇼핑몰의 접속 주소가 됨 (예: my-shop → my-shop.도메인). 영문 소문자/숫자/하이픈만,
+          www·admin·app·api·auth·dashboard는 예약어라 사용 불가.
+        </span>
       </label>
       <label className="block text-xs font-medium text-gray-500">
-        ShopBy Mall ID
+        ShopBy Client ID
         <input
-          name="mallId"
+          name="clientId"
           required
+          placeholder="예: test-client-id"
           className="mt-1 w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm text-gray-900 focus:border-indigo-400 focus:outline-none"
         />
+        <span className="mt-1 block text-[11px] font-normal text-gray-400">
+          ShopBy Shop API 호출 시 clientId 헤더로 그대로 전송되는 쇼핑몰 클라이언트 아이디.
+          ShopBy 파트너센터 → Open API 관리에서 확인.
+        </span>
       </label>
       <label className="block text-xs font-medium text-gray-500">
         ShopBy API Key
@@ -36,6 +45,10 @@ export function CreateTenantForm() {
           type="password"
           className="mt-1 w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm text-gray-900 focus:border-indigo-400 focus:outline-none"
         />
+        <span className="mt-1 block text-[11px] font-normal text-gray-400">
+          Shop API 조회에는 안 쓰임 — 이후 Server API(주문 처리 등) 연동 시 쓸 시크릿. 지금은
+          형식 확인용으로만 저장됨, 저장 후에는 다시 표시되지 않음.
+        </span>
       </label>
       {state.error && <p className="text-sm text-red-500">{state.error}</p>}
       <button

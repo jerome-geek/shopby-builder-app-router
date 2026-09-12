@@ -1,15 +1,16 @@
 /**
- * ShopBy API 서버사이드 호출 레이어
+ * ShopBy Shop API 서버사이드 호출 레이어
  *
- * 클라이언트에서 직접 호출하면 API Key가 노출되므로
- * 반드시 서버 컴포넌트 또는 API Route에서만 사용할 것.
+ * https://docs.shopby.co.kr/?url.primaryName=product/#/Product/get-products-product
+ * 인증은 clientId(공개 식별자) 헤더 하나로 이뤄짐 — mallId라는 필드는 실제 API에 없음.
+ * accessToken/Shop-By-Authorization은 "구매자" 로그인 토큰이라 관리자 쪽 시크릿과 무관하고,
+ * 아직 buyer 세션을 안 다루므로 보내지 않음. Server API(주문 처리 등) 붙일 때 별도 인증 필요.
  */
 
-const SHOPBY_BASE_URL = 'https://api.shopby.co.kr'
+const SHOPBY_BASE_URL = 'https://shop-api.shopby.co.kr'
 
 interface ShopByRequestOptions {
-  mallId: string
-  apiKey: string
+  clientId: string
   path: string
   params?: Record<string, string | number | boolean>
   cache?: RequestCache
@@ -17,8 +18,7 @@ interface ShopByRequestOptions {
 }
 
 async function shopbyFetch<T>({
-  mallId,
-  apiKey,
+  clientId,
   path,
   params,
   cache = 'force-cache',
@@ -34,8 +34,9 @@ async function shopbyFetch<T>({
 
   const res = await fetch(url.toString(), {
     headers: {
-      mallId,
-      accessToken: apiKey,
+      clientId,
+      Version: '1.0',
+      platform: 'PC',
       'Content-Type': 'application/json',
     },
     cache,
@@ -77,13 +78,11 @@ export interface ProductListResult {
 }
 
 export async function getProducts(
-  mallId: string,
-  apiKey: string,
+  clientId: string,
   params: ProductListParams = {}
 ): Promise<ProductListResult> {
   return shopbyFetch<ProductListResult>({
-    mallId,
-    apiKey,
+    clientId,
     path: 'products',
     params: {
       pageSize: 8,
@@ -107,13 +106,9 @@ export interface ShopByCategory {
   children?: ShopByCategory[]
 }
 
-export async function getCategories(
-  mallId: string,
-  apiKey: string
-): Promise<ShopByCategory[]> {
+export async function getCategories(clientId: string): Promise<ShopByCategory[]> {
   const data = await shopbyFetch<{ categories: ShopByCategory[] }>({
-    mallId,
-    apiKey,
+    clientId,
     path: 'categories',
     revalidate: 3600, // 카테고리는 자주 안 바뀜
   })
@@ -134,7 +129,7 @@ export async function getTenantCredentials(tenantIdOrSubdomain: string) {
         { customDomain: tenantIdOrSubdomain },
       ],
     },
-    select: { mallId: true, apiKey: true },
+    select: { clientId: true, apiKey: true },
   })
 
   if (!tenant) {

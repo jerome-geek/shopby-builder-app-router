@@ -39,7 +39,7 @@ export default async function TenantDetailPage({ params }: TenantDetailPageProps
 
       <section>
         <h2 className="text-lg font-bold text-gray-900 mb-3">ShopBy 연동 설정</h2>
-        <TenantSettingsForm tenantId={tenant.id} mallId={tenant.mallId} apiKey={tenant.apiKey} />
+        <TenantSettingsForm tenantId={tenant.id} clientId={tenant.clientId} apiKey={tenant.apiKey} />
       </section>
 
       <section>

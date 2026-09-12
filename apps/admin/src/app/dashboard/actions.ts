@@ -218,13 +218,13 @@ export async function createTenant(_prevState: ActionState, formData: FormData):
   const admin = await requireAdministrator()
 
   const subdomain = normalizeSubdomain(String(formData.get('subdomain') ?? ''))
-  const mallId = nonEmpty(String(formData.get('mallId') ?? ''))
+  const clientId = nonEmpty(String(formData.get('clientId') ?? ''))
   const apiKey = nonEmpty(String(formData.get('apiKey') ?? ''))
 
   if (!subdomain) {
     return { error: '서브도메인 형식이 올바르지 않습니다 (영문 소문자·숫자·하이픈, 예약어 제외).' }
   }
-  if (!mallId) return { error: 'ShopBy Mall ID를 입력해주세요.' }
+  if (!clientId) return { error: 'ShopBy Client ID를 입력해주세요.' }
   if (!apiKey) return { error: 'ShopBy API Key를 입력해주세요.' }
 
   const existing = await prisma.tenant.findUnique({ where: { subdomain } })
@@ -233,7 +233,7 @@ export async function createTenant(_prevState: ActionState, formData: FormData):
   const tenant = await prisma.tenant.create({
     data: {
       subdomain,
-      mallId,
+      clientId,
       apiKey,
       memberships: { create: { administratorId: admin.id } },
     },
@@ -247,12 +247,12 @@ export async function updateTenant(_prevState: ActionState, formData: FormData):
   const tenantId = String(formData.get('tenantId') ?? '')
   await requireTenantMembership(tenantId)
 
-  const mallId = nonEmpty(String(formData.get('mallId') ?? ''))
+  const clientId = nonEmpty(String(formData.get('clientId') ?? ''))
   const apiKey = nonEmpty(String(formData.get('apiKey') ?? ''))
-  if (!mallId) return { error: 'ShopBy Mall ID를 입력해주세요.' }
+  if (!clientId) return { error: 'ShopBy Client ID를 입력해주세요.' }
   if (!apiKey) return { error: 'ShopBy API Key를 입력해주세요.' }
 
-  await prisma.tenant.update({ where: { id: tenantId }, data: { mallId, apiKey } })
+  await prisma.tenant.update({ where: { id: tenantId }, data: { clientId, apiKey } })
   revalidatePath(`/dashboard/tenants/${tenantId}`)
   return {}
 }

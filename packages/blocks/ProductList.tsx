@@ -24,8 +24,8 @@ export default async function ProductList({ block }: Props) {
   let products: Awaited<ReturnType<typeof getProducts>>['items'] = []
 
   try {
-    const { mallId, apiKey } = await getTenantCredentials(tenantIdentifier)
-    const result = await getProducts(mallId, apiKey, apiParams)
+    const { clientId } = await getTenantCredentials(tenantIdentifier)
+    const result = await getProducts(clientId, apiParams)
     products = result.items
   } catch (e) {
     console.error('ProductList fetch error:', e)

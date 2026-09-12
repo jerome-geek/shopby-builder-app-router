@@ -14,8 +14,8 @@ model Tenant {
   id           String   @id @default(cuid())
   subdomain    String   @unique           // abc.yourplatform.com
   customDomain String?  @unique           // www.abc.com
-  mallId       String                     // ShopBy mallId
-  apiKey       String                     // ShopBy API Key (legacy plaintext, retained until encrypted backfill completes)
+  clientId     String                     // ShopBy Shop API clientId (공개 식별자, 헤더로 그대로 전송됨)
+  apiKey       String                     // ShopBy Server API용 시크릿 (legacy plaintext, retained until encrypted backfill completes; Shop API 호출에는 쓰이지 않음)
 
   // Versioned envelope-encrypted ShopBy credential. Null until the
   // backfill (tasks 5.1/5.3) runs; apiKey above stays authoritative

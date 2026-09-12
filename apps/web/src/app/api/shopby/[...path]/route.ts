@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { getTenantCredentials } from '@repo/utils'
 
-const SHOPBY_BASE_URL = 'https://api.shopby.co.kr'
+const SHOPBY_BASE_URL = 'https://shop-api.shopby.co.kr'
 
 /**
  * ShopBy API Proxy
@@ -30,7 +30,7 @@ export async function GET(
       return NextResponse.json({ error: 'Tenant not identified' }, { status: 400 })
     }
 
-    const { mallId, apiKey } = await getTenantCredentials(tenantIdentifier)
+    const { clientId } = await getTenantCredentials(tenantIdentifier)
 
     // 원본 쿼리스트링 그대로 전달
     const searchParams = req.nextUrl.searchParams.toString()
@@ -38,8 +38,9 @@ export async function GET(
 
     const response = await fetch(shopbyUrl, {
       headers: {
-        mallId,
-        accessToken: apiKey,
+        clientId,
+        Version: '1.0',
+        platform: 'PC',
         'Content-Type': 'application/json',
       },
     })
@@ -79,15 +80,16 @@ export async function POST(
       return NextResponse.json({ error: 'Tenant not identified' }, { status: 400 })
     }
 
-    const { mallId, apiKey } = await getTenantCredentials(tenantIdentifier)
+    const { clientId } = await getTenantCredentials(tenantIdentifier)
     const body = await req.json()
     const shopbyUrl = `${SHOPBY_BASE_URL}/${path.join('/')}`
 
     const response = await fetch(shopbyUrl, {
       method: 'POST',
       headers: {
-        mallId,
-        accessToken: apiKey,
+        clientId,
+        Version: '1.0',
+        platform: 'PC',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),

@@ -9,7 +9,7 @@ async function main() {
     update: {},
     create: {
       subdomain: 'my-shop',
-      mallId: 'test-mall',
+      clientId: 'test-client-id',
       apiKey: 'test-api-key',
       theme: JSON.stringify({ primaryColor: '#4f46e5' }),
       pages: {

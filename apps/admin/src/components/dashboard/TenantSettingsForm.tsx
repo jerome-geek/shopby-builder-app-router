@@ -7,22 +7,22 @@ const initialState: ActionState = {}
 
 interface TenantSettingsFormProps {
   tenantId: string
-  mallId: string
+  clientId: string
   apiKey: string
 }
 
-export function TenantSettingsForm({ tenantId, mallId, apiKey }: TenantSettingsFormProps) {
+export function TenantSettingsForm({ tenantId, clientId, apiKey }: TenantSettingsFormProps) {
   const [state, action, pending] = useActionState(updateTenant, initialState)
 
   return (
     <form action={action} className="space-y-4 max-w-sm">
       <input type="hidden" name="tenantId" value={tenantId} />
       <label className="block text-xs font-medium text-gray-500">
-        ShopBy Mall ID
+        ShopBy Client ID
         <input
-          name="mallId"
+          name="clientId"
           required
-          defaultValue={mallId}
+          defaultValue={clientId}
           className="mt-1 w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm text-gray-900 focus:border-indigo-400 focus:outline-none"
         />
       </label>

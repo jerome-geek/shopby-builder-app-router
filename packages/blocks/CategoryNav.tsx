@@ -16,8 +16,8 @@ export default async function CategoryNav({ block }: Props) {
   let categories: Awaited<ReturnType<typeof getCategories>> = []
 
   try {
-    const { mallId, apiKey } = await getTenantCredentials(tenantIdentifier)
-    categories = await getCategories(mallId, apiKey)
+    const { clientId } = await getTenantCredentials(tenantIdentifier)
+    categories = await getCategories(clientId)
   } catch (e) {
     console.error('CategoryNav fetch error:', e)
   }

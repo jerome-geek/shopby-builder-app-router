@@ -5,9 +5,15 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
+// NOTE: 이메일 인증 링크 플로우가 아직 안 고쳐져서 (TODO.md 참고) 개발 중
+// 로그인 테스트용으로 jerome@admin.local / qwer123!@# 계정을 미리 채워둠.
+// 이메일 템플릿 수정 끝나면 이 프리필 지울 것.
+const DEV_EMAIL = 'jerome@admin.local'
+const DEV_PASSWORD = 'qwer123!@#'
+
 export function LoginForm() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [email, setEmail] = useState(DEV_EMAIL)
+  const [password, setPassword] = useState(DEV_PASSWORD)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()

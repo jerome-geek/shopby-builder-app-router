@@ -1,5 +1,12 @@
-<!-- BEGIN:nextjs-agent-rules -->
-# This is NOT the Next.js you know
+# 작업 원칙
+- 해결책을 설계하기 전에, 이미 자리 잡은 제품들이 같은 문제를 어떻게 푸는지 먼저 살펴보세요. 접근 방식을 처음부터 발명하지 말고 검증된 패턴과 관례를 채택하세요.
+- 하위 호환을 유지하지 마세요. 호환 레이어·폴백·마이그레이션을 덧붙이는 대신 쓰이지 않는 경로를 삭제하세요.
+- 현재 요구사항을 완전히 충족하는 가장 단순한 구현을 선택하세요. 추측에 근거한 추상화, 설정값, 간접 계층을 만들지 마세요.
+- 시스템은 레이어로 키우세요. 엔드투엔드로 동작하는 최소 버전에서 시작하고, 이미 동작하는 결과물 위에 기능을 하나씩 얹으세요. 동작하는 코드를 미완성 복잡도와 맞바꾸지 마세요.
+- 컴포넌트는 모듈로 분리하고 관심사를 명확히 나누세요.
+- 검증되고 유지보수되는 라이브러리가 전체 복잡도를 낮추거나 안정성을 높인다면 그것을 쓰세요. 흔한 기능을 명확한 이유 없이 재구현하지 마세요.
+- 직접 구현하거나 패키지를 추가하기 전에 워크스페이스(@repo/*)와 이미 설치된 의존성부터 확인하세요. 문서와 타입을 확인하지 않은 채 "이 라이브러리엔 그 기능이 없다"고 단정하지 마세요.
+- 아키텍처 결정은 장기 관점으로 하세요. 지금만 넘기고 나중에 교체할 임시방편을 받아들이지 마세요.
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
-<!-- END:nextjs-agent-rules -->
+# 프로젝트 예외
+- Next.js 16 breaking change: `params`, `searchParams`, `cookies()`, `headers()` 등 Request API는 반드시 `await`해야 합니다. API 규격은 `node_modules/next/dist/docs/`를 따르세요.
